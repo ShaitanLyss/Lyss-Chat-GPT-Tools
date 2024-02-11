@@ -14,7 +14,7 @@ from openai.types.chat import ChatCompletionMessageParam
 
 from pydantic import BaseModel, Field
 
-base_dir = os.path.dirname(os.path.realpath(__file__))
+from commons import base_dir
 
 
 class Message(BaseModel):
@@ -140,16 +140,19 @@ def chat_with_gpt(message, with_summary=False):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Chat with GPT")
-    parser.add_argument(
-        "message", type=str, help="The message to chat with GPT", nargs="+"
-    )
+    try:
+        parser = argparse.ArgumentParser(description="Chat with GPT")
+        parser.add_argument(
+            "message", type=str, help="The message to chat with GPT", nargs="+"
+        )
 
-    parser.add_argument(
-        "-s", help="With summary", action="store_true", default=False, dest="summary"
-    )
-    args = parser.parse_args()
-    chat_with_gpt(" ".join(args.message), with_summary=args.summary)
+        parser.add_argument(
+            "-s", help="With summary", action="store_true", default=False, dest="summary"
+        )
+        args = parser.parse_args()
+        chat_with_gpt(" ".join(args.message), with_summary=args.summary)
+    except KeyboardInterrupt:
+        print("\nInterrupted")
 
 
 if __name__ == "__main__":
