@@ -102,10 +102,10 @@ def chat_with_gpt(message, with_summary=False):
     chat_history.add_message(new_message)
 
     response = client.chat.completions.create(
-            model="gpt-4-turbo-preview",
+        model="gpt-4-1106-preview",
         messages=[
             make_openai_message(msg)
-            for msg in custom_instructions + chat_history.messages[:]
+            for msg in custom_instructions + chat_history.messages[-100:]
         ],
         stream=True,
     )
