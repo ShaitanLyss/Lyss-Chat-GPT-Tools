@@ -24,10 +24,12 @@ class Message(BaseModel):
 
 
 class ChatHistory(BaseModel):
+    num_msgs_since_reset: int = 0
     messages: List[Message] = []
 
     def add_message(self, message: Message):
         self.messages.append(message)
+        self.num_msgs_since_reset += 1
 
     @staticmethod
     def from_json(json):
@@ -35,6 +37,9 @@ class ChatHistory(BaseModel):
 
     def to_json(self):
         return self.model_dump_json(indent=4)
+
+    def reset(self):
+        self.num_msgs_since_reset = 0
 
     @staticmethod
     def from_file(filename):
@@ -85,7 +90,7 @@ def make_openai_message(message: Message) -> ChatCompletionMessageParam:
     return {"content": message.content, "role": message.role}
 
 
-def chat_with_gpt(message, with_summary=False, n_history=5):
+def chat_with_gpt(message, with_summary=False, n_history=None, reset=False):
     load_dotenv()  # Load environment variables from .env file
     api_key = os.getenv("OPENAI_API_KEY")
     client = OpenAI(api_key=api_key)
@@ -93,15 +98,22 @@ def chat_with_gpt(message, with_summary=False, n_history=5):
     chat_history = ChatHistory.from_file(
         os.path.join(base_dir, "save/chat_history.json")
     )
+    if reset:
+        chat_history.reset()
 
     new_message = Message(role="user", content=message, created_at=datetime.now())
     chat_history.add_message(new_message)
 
+    if n_history is not None:
+        n_messages = n_history
+    else:
+        n_messages = chat_history.num_msgs_since_reset
+    # print("n messages : ", n_messages)
     response = client.chat.completions.create(
         model="gpt-4-turbo-preview",
         messages=[
             make_openai_message(msg)
-            for msg in custom_instructions + chat_history.messages[-n_history:]
+            for msg in custom_instructions + chat_history.messages[-n_messages:]
         ],
         stream=True,
     )
@@ -146,7 +158,7 @@ def main():
         parser.add_argument(
             "-n",
             help="Number of messages from history",
-            default=5,
+            default=None,
             dest="n_history",
             type=int,
         )
@@ -158,11 +170,20 @@ def main():
             default=False,
             dest="summary",
         )
+        parser.add_argument(
+            "-r",
+            help="Reset history",
+            action="store_true",
+            default=False,
+            dest="reset",
+        )
 
-        # pl
         args = parser.parse_args()
         chat_with_gpt(
-            " ".join(args.message), with_summary=args.summary, n_history=args.n_history
+            " ".join(args.message),
+            with_summary=args.summary,
+            n_history=args.n_history,
+            reset=args.reset,
         )
     except KeyboardInterrupt:
         print("\nInterrupted")
