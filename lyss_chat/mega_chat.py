@@ -1,7 +1,3 @@
-from ast import mod
-from json import JSONEncoder
-import json
-from pprint import pp
 from typing import Any, List, Literal
 from openai import OpenAI
 from datetime import datetime
@@ -102,7 +98,7 @@ def chat_with_gpt(message, with_summary=False, n_history=5):
     chat_history.add_message(new_message)
 
     response = client.chat.completions.create(
-            model="gpt-4-turbo-preview",
+        model="gpt-4-turbo-preview",
         messages=[
             make_openai_message(msg)
             for msg in custom_instructions + chat_history.messages[-n_history:]
@@ -133,7 +129,9 @@ def chat_with_gpt(message, with_summary=False, n_history=5):
     print()
     if first_chunk:
         new_message = Message(
-            role=first_chunk.choices[0].delta.role, content="".join(content_arr), created_at=datetime.now()
+            role=first_chunk.choices[0].delta.role,
+            content="".join(content_arr),
+            created_at=datetime.now(),
         )
         chat_history.add_message(new_message)
         chat_history.to_file(os.path.join(base_dir, "save/chat_history.json"))
@@ -145,13 +143,27 @@ def main():
         parser.add_argument(
             "message", type=str, help="The message to chat with GPT", nargs="+"
         )
-        parser.add_argument("-n", help='Number of messages from history', default=5, dest="n_history", type=int)
+        parser.add_argument(
+            "-n",
+            help="Number of messages from history",
+            default=5,
+            dest="n_history",
+            type=int,
+        )
 
         parser.add_argument(
-            "-s", help="With summary", action="store_true", default=False, dest="summary"
+            "-s",
+            help="With summary",
+            action="store_true",
+            default=False,
+            dest="summary",
         )
+
+        # pl
         args = parser.parse_args()
-        chat_with_gpt(" ".join(args.message), with_summary=args.summary, n_history=args.n_history)
+        chat_with_gpt(
+            " ".join(args.message), with_summary=args.summary, n_history=args.n_history
+        )
     except KeyboardInterrupt:
         print("\nInterrupted")
 
