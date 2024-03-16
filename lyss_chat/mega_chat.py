@@ -89,7 +89,7 @@ def make_openai_message(message: Message) -> ChatCompletionMessageParam:
     return {"content": message.content, "role": message.role}
 
 
-def chat_with_gpt(message, with_summary=False):
+def chat_with_gpt(message, with_summary=False, n_history=5):
     load_dotenv()  # Load environment variables from .env file
     api_key = os.getenv("OPENAI_API_KEY")
     client = OpenAI(api_key=api_key)
@@ -105,7 +105,7 @@ def chat_with_gpt(message, with_summary=False):
             model="gpt-4-turbo-preview",
         messages=[
             make_openai_message(msg)
-            for msg in custom_instructions + chat_history.messages[:]
+            for msg in custom_instructions + chat_history.messages[-n_history:]
         ],
         stream=True,
     )
@@ -145,12 +145,13 @@ def main():
         parser.add_argument(
             "message", type=str, help="The message to chat with GPT", nargs="+"
         )
+        parser.add_argument("-n", help='Number of messages from history', default=5, dest="n_history", type=int)
 
         parser.add_argument(
             "-s", help="With summary", action="store_true", default=False, dest="summary"
         )
         args = parser.parse_args()
-        chat_with_gpt(" ".join(args.message), with_summary=args.summary)
+        chat_with_gpt(" ".join(args.message), with_summary=args.summary, n_history=args.n_history)
     except KeyboardInterrupt:
         print("\nInterrupted")
 
