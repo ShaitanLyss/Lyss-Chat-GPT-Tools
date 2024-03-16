@@ -90,7 +90,9 @@ def make_openai_message(message: Message) -> ChatCompletionMessageParam:
     return {"content": message.content, "role": message.role}
 
 
-def chat_with_gpt(message, with_summary=False, n_history=None, reset=False):
+def chat_with_gpt(
+    message, with_summary=False, n_history=None, reset=False, max_=5, debug=False
+):
     load_dotenv()  # Load environment variables from .env file
     api_key = os.getenv("OPENAI_API_KEY")
     client = OpenAI(api_key=api_key)
@@ -107,8 +109,9 @@ def chat_with_gpt(message, with_summary=False, n_history=None, reset=False):
     if n_history is not None:
         n_messages = n_history
     else:
-        n_messages = chat_history.num_msgs_since_reset
-    # print("n messages : ", n_messages)
+        n_messages = min(chat_history.num_msgs_since_reset, max_)
+    if debug:
+        print("n messages : ", n_messages)
     response = client.chat.completions.create(
         model="gpt-4-turbo-preview",
         messages=[
@@ -157,12 +160,19 @@ def main():
         )
         parser.add_argument(
             "-n",
-            help="Number of messages from history",
+            help="Number of messages from history (overrides number of messages since reset)",
             default=None,
             dest="n_history",
             type=int,
         )
 
+        parser.add_argument(
+            "-m",
+            help="Max number of messages since reset",
+            default=5,
+            dest="max_since_reset",
+            type=int,
+        )
         parser.add_argument(
             "-s",
             help="With summary",
@@ -178,12 +188,21 @@ def main():
             dest="reset",
         )
 
+        parser.add_argument(
+            "-d",
+            help="Debug logs",
+            action="store_true",
+            default=False,
+            dest="debug",
+        )
         args = parser.parse_args()
         chat_with_gpt(
             " ".join(args.message),
             with_summary=args.summary,
             n_history=args.n_history,
             reset=args.reset,
+            max_=args.max_since_reset,
+            debug=args.debug,
         )
     except KeyboardInterrupt:
         print("\nInterrupted")
