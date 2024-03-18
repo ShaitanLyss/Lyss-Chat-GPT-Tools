@@ -156,7 +156,7 @@ def main():
     try:
         parser = argparse.ArgumentParser(description="Chat with GPT")
         parser.add_argument(
-            "message", type=str, help="The message to chat with GPT", nargs="+"
+            "message", type=str, help="The message to chat with GPT", nargs="*"
         )
         parser.add_argument(
             "-n",
@@ -196,8 +196,11 @@ def main():
             dest="debug",
         )
         args = parser.parse_args()
+        msg = " ".join(args.message)
+        if not msg:
+            msg = input("Message ? ")
         chat_with_gpt(
-            " ".join(args.message),
+            msg,
             with_summary=args.summary,
             n_history=args.n_history,
             reset=args.reset,
