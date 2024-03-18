@@ -195,10 +195,18 @@ def main():
             default=False,
             dest="debug",
         )
+        
+        parser.add_argument(
+            "-i",
+            help="Prompt user for additional message",
+            action="store_true",
+            default=False,
+            dest="input",
+        )
         args = parser.parse_args()
         msg = " ".join(args.message)
-        if not msg:
-            msg = input("Message ? ")
+        if not msg or args.input:
+            msg = msg + " " + input("Message ? ")
         chat_with_gpt(
             msg,
             with_summary=args.summary,
