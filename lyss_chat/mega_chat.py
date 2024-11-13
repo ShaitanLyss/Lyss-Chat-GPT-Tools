@@ -113,7 +113,7 @@ def chat_with_gpt(
     if debug:
         print("n messages : ", n_messages)
     response = client.chat.completions.create(
-        model="gpt-4-turbo-preview",
+        model="gpt-4o",
         messages=[
             make_openai_message(msg)
             for msg in custom_instructions + chat_history.messages[-n_messages:]
